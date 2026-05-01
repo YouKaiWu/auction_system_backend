@@ -115,7 +115,7 @@ CREATE INDEX idx_bid_price ON bid(bid_price);
 -- 進階（建議）
 CREATE INDEX idx_item_status_time ON item(status, start_time);
 CREATE INDEX idx_bid_item_price ON bid(item_id, bid_price);
-
+```
 ---
 # Auction System Backend Architecture
 
