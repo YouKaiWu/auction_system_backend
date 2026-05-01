@@ -21,17 +21,10 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    // =========================
-    // PasswordEncoder
-    // =========================
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    // =========================
-    // Security Filter Chain
-    // =========================
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http)
@@ -42,12 +35,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // .anyRequest().permitAll()
-
                         // auth 放行
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // swagger（如果你有用）
+                        // swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // 其他全部要登入

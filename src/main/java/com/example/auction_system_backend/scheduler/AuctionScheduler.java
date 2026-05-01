@@ -22,9 +22,6 @@ public class AuctionScheduler {
         this.auctionService = auctionService;
     }
 
-    /**
-     * ⏰ 每 60 秒執行一次
-     */
     @Scheduled(fixedRate = 60000)
     public void autoCloseAuction() {
 

@@ -18,9 +18,6 @@ public class ItemService {
 
     private final ItemMapper itemMapper;
 
-    // =========================
-    // 建立商品
-    // =========================
     public void create(CreateItemRequest req) {
 
         Long userId = getCurrentUserId();
@@ -41,9 +38,6 @@ public class ItemService {
         itemMapper.insert(item);
     }
 
-    // =========================
-    // 查詢商品（ACTIVE）
-    // =========================
     public List<Item> getItems(Integer categoryId) {
 
         LambdaQueryWrapper<Item> qw = new LambdaQueryWrapper<>();
@@ -57,16 +51,10 @@ public class ItemService {
         return itemMapper.selectList(qw);
     }
 
-    // =========================
-    // 商品詳細
-    // =========================
     public Item getDetail(Integer id) {
         return itemMapper.selectById(id);
     }
 
-    // =========================
-    // 我的商品
-    // =========================
     public List<Item> getMyItems() {
 
         Long userId = getCurrentUserId();

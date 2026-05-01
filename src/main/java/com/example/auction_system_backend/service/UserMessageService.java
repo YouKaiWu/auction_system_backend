@@ -6,6 +6,8 @@ import com.example.auction_system_backend.DTO.message.MessageResponse;
 import com.example.auction_system_backend.entity.UserMessage;
 import com.example.auction_system_backend.mapper.UserMessageMapper;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,17 +16,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserMessageService {
 
     private final UserMessageMapper messageMapper;
 
-    public UserMessageService(UserMessageMapper messageMapper) {
-        this.messageMapper = messageMapper;
-    }
-
-    /**
-     * 📩 留言
-     */
     @Transactional
     public MessageResponse sendMessage(Long targetUserId, MessageRequest request) {
 
@@ -39,7 +35,7 @@ public class UserMessageService {
 
         UserMessage msg = new UserMessage();
         msg.setTargetUserId(targetUserId);
-        msg.setAuthorUserId(getCurrentUserId()); // 🔥 不讓前端傳
+        msg.setAuthorUserId(getCurrentUserId()); 
         msg.setContent(request.getContent());
         msg.setRating(request.getRating());
         msg.setCreatedAt(LocalDateTime.now());
@@ -49,9 +45,6 @@ public class UserMessageService {
         return toResponse(msg);
     }
 
-    /**
-     * 📖 查看留言板
-     */
     public List<MessageResponse> getMessages(Long targetUserId) {
 
         List<UserMessage> list = messageMapper.selectList(

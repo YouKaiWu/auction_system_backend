@@ -27,11 +27,8 @@ public class AuctionService {
     private final AuctionResultMapper auctionResultMapper;
 
     private final MailService mailService;
-private final UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    /**
-     * 🛑 結標（手動 / scheduler 共用）
-     */
     @Transactional
     public AuctionResultResponse closeAuction(Integer itemId) {
 
@@ -44,8 +41,7 @@ private final UserMapper userMapper;
         // 2. 如果已經結標（防重複執行）
         AuctionResult existingResult = auctionResultMapper.selectOne(
                 new LambdaQueryWrapper<AuctionResult>()
-                        .eq(AuctionResult::getItemId, itemId)
-        );
+                        .eq(AuctionResult::getItemId, itemId));
 
         if (existingResult != null) {
             return toResponse(existingResult);
@@ -56,8 +52,7 @@ private final UserMapper userMapper;
                 new LambdaQueryWrapper<Bid>()
                         .eq(Bid::getItemId, itemId)
                         .orderByDesc(Bid::getBidPrice)
-                        .last("LIMIT 1")
-        );
+                        .last("LIMIT 1"));
 
         Long winnerId = null;
         BigDecimal finalPrice = BigDecimal.ZERO;
@@ -86,15 +81,11 @@ private final UserMapper userMapper;
         return toResponse(result);
     }
 
-    /**
-     * 🏁 查結標結果
-     */
     public AuctionResultResponse getAuctionResult(Long itemId) {
 
         AuctionResult result = auctionResultMapper.selectOne(
                 new LambdaQueryWrapper<AuctionResult>()
-                        .eq(AuctionResult::getItemId, itemId)
-        );
+                        .eq(AuctionResult::getItemId, itemId));
 
         if (result == null) {
             throw new RuntimeException("Auction not closed yet");
@@ -103,33 +94,28 @@ private final UserMapper userMapper;
         return toResponse(result);
     }
 
-    /**
-     * 📩 通知 winner（先 stub）
-     */
     private void notifyWinner(Long winnerId, Item item, BigDecimal finalPrice) {
 
-    if (winnerId == null) {
-        return;
+        if (winnerId == null) {
+            return;
+        }
+
+        // 找 email
+        String email = userMapper.selectById(winnerId).getEmail();
+
+        // TODO: 寄信可用 mailtrap
+        // 寄信
+        // mailService.sendWinAuctionMail(
+        // email,
+        // item.getName(),
+        // finalPrice.toString()
+        // );
+
+        // optional：log / notification table
+        System.out.println("notify sent to " + email);
     }
 
-    // 找 email
-    String email = userMapper.selectById(winnerId).getEmail();
-
-
-    // TODO: 寄信可用 mailtrap
-    // 寄信
-    // mailService.sendWinAuctionMail(
-    //         email,
-    //         item.getName(),
-    //         finalPrice.toString()
-    // );
-
-    // optional：log / notification table
-    System.out.println("notify sent to " + email);
-}
-    /**
-     * 🔁 DTO mapping
-     */
+    // DTO mapping
     private AuctionResultResponse toResponse(AuctionResult r) {
 
         AuctionResultResponse res = new AuctionResultResponse();

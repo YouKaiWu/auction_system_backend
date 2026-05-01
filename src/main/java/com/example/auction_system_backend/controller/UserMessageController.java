@@ -18,9 +18,6 @@ public class UserMessageController {
         this.messageService = messageService;
     }
 
-    /**
-     * 📩 對使用者留言
-     */
     @PostMapping("/{id}/messages")
     public ResponseEntity<MessageResponse> sendMessage(
             @PathVariable Long id,
@@ -29,9 +26,6 @@ public class UserMessageController {
                 messageService.sendMessage(id, request));
     }
 
-    /**
-     * 📖 查看留言板
-     */
     @GetMapping("/{id}/messages")
     public ResponseEntity<List<MessageResponse>> getMessages(
             @PathVariable Long id) {

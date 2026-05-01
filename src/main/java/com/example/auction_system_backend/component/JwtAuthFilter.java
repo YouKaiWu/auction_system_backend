@@ -31,7 +31,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 
         String header = request.getHeader("Authorization");
 
-        // 沒 token 直接放行（交給 SecurityConfig 判斷）
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;

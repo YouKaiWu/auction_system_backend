@@ -4,22 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.auction_system_backend.DTO.notification.NotificationResponse;
 import com.example.auction_system_backend.entity.Notification;
 import com.example.auction_system_backend.mapper.NotificationMapper;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
 
-    public NotificationService(NotificationMapper notificationMapper) {
-        this.notificationMapper = notificationMapper;
-    }
 
-    /**
-     * 📥 取得使用者通知
-     */
     public List<NotificationResponse> getNotifications(Long userId) {
 
         List<Notification> list = notificationMapper.selectList(
@@ -33,9 +31,6 @@ public class NotificationService {
                 .toList();
     }
 
-    /**
-     * 📤 建立通知（給其他 service 用）
-     */
     public void createNotification(Long userId,
                                    String type,
                                    String title,

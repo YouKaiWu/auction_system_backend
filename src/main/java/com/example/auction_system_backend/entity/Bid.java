@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 public class Bid {
 
-    @TableId(type = IdType.AUTO) // PostgreSQL SERIAL / IDENTITY
+    @TableId(type = IdType.AUTO) 
     private Long id;
 
     private Long itemId;

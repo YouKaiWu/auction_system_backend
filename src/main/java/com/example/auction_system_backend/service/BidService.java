@@ -33,9 +33,6 @@ public class BidService {
         this.userMapper = userMapper;
     }
 
-    /**
-     * 🚀 出價核心
-     */
     @Transactional
     public BidResponse placeBid(BidRequest request) {
 
@@ -49,7 +46,7 @@ public class BidService {
             throw new RuntimeException("Item not found");
         }
 
-        // 3. 🔥 由後端取得 userId（不是前端傳）
+        // 3. 取得 userId（
         Long userId = getCurrentUserId();
 
         if (userMapper.selectById(userId) == null) {
@@ -84,9 +81,6 @@ public class BidService {
         return toResponse(bid);
     }
 
-    /**
-     * 📌 查某商品所有 bids
-     */
     public List<BidResponse> getItemBids(Long itemId) {
 
         List<Bid> list = bidMapper.selectList(
@@ -99,9 +93,6 @@ public class BidService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 🏆 最高 bid
-     */
     public BidResponse getHighestBid(Long itemId) {
 
         Bid bid = bidMapper.selectOne(
@@ -113,9 +104,7 @@ public class BidService {
         return bid == null ? null : toResponse(bid);
     }
 
-    /**
-     * 🔁 DTO mapping
-     */
+    // DTO mapping
     private BidResponse toResponse(Bid bid) {
         BidResponse res = new BidResponse();
         res.setBidId(bid.getId());
@@ -129,7 +118,7 @@ public class BidService {
 
     public List<BidResponse> getMyBids() {
 
-        Long userId = getCurrentUserId(); // 🔥 之後接 JWT
+        Long userId = getCurrentUserId();
 
         List<Bid> list = bidMapper.selectList(
                 new LambdaQueryWrapper<Bid>()

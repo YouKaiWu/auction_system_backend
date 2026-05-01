@@ -23,9 +23,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // =========================
-    // POST /api/auth/register
-    // =========================
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @RequestBody RegisterRequest req) {
@@ -34,9 +31,6 @@ public class AuthController {
         return ResponseEntity.ok("Register success");
     }
 
-    // =========================
-    // POST /api/auth/login
-    // =========================
     @PostMapping("/login")
     public AuthResponse login(
             @RequestBody LoginRequest req) {
@@ -46,9 +40,6 @@ public class AuthController {
         return new AuthResponse(token);
     }
 
-    // =========================
-    // GET /api/auth/me
-    // =========================
     @GetMapping("/me")
     public User me(@AuthenticationPrincipal Long authId) {
         System.out.println("test:"+authId);

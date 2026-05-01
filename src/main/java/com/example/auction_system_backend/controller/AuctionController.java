@@ -15,9 +15,6 @@ public class AuctionController {
         this.auctionService = auctionService;
     }
 
-    /**
-     * 🛑 手動結標（admin / debug / 測試用）
-     */
     @PostMapping("/{itemId}/close")
     public ResponseEntity<AuctionResultResponse> closeAuction(
             @PathVariable Integer itemId
@@ -27,9 +24,6 @@ public class AuctionController {
         );
     }
 
-    /**
-     * 🏁 查結標結果（winner / price / item info）
-     */
     @GetMapping("/{itemId}/result")
     public ResponseEntity<AuctionResultResponse> getResult(
             @PathVariable Long itemId

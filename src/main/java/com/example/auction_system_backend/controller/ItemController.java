@@ -17,18 +17,11 @@ public class ItemController {
 
     private final ItemService itemService;
 
-    // ======================
-    // 建立商品（賣家）
-    // ======================
     @PostMapping
     public void create(@RequestBody CreateItemRequest req) {
         itemService.create(req);
     }
 
-    // ======================
-    // 查詢商品（買家）
-    // GET /api/items?categoryId=1
-    // ======================
     @GetMapping
     public List<Item> getItems(
             @RequestParam(required = false) Integer categoryId
@@ -36,17 +29,11 @@ public class ItemController {
         return itemService.getItems(categoryId);
     }
 
-    // ======================
-    // 商品詳細
-    // ======================
     @GetMapping("/{id}")
     public Item getDetail(@PathVariable Integer id) {
         return itemService.getDetail(id);
     }
 
-    // ======================
-    // 我的商品
-    // ======================
     @GetMapping("/my")
     public List<Item> getMyItems() {
         return itemService.getMyItems();

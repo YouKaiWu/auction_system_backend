@@ -18,13 +18,10 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
-    /**
-     * 📬 查通知
-     */
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getNotifications() {
 
-        Long userId = getCurrentUserId(); // 🔥 JWT 之後替換
+        Long userId = getCurrentUserId(); 
 
         return ResponseEntity.ok(
                 notificationService.getNotifications(userId));

@@ -19,9 +19,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    // =========================
-    // register
-    // =========================
     public void register(RegisterRequest req) {
 
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
@@ -41,9 +38,6 @@ public class AuthService {
         userMapper.insert(user);
     }
 
-    // =========================
-    // login
-    // =========================
     public String login(LoginRequest req) {
 
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
@@ -52,7 +46,7 @@ public class AuthService {
         User user = userMapper.selectOne(qw);
 
         if (user == null ||
-            !passwordEncoder.matches(req.getPasswd(), user.getPasswd())) {
+                !passwordEncoder.matches(req.getPasswd(), user.getPasswd())) {
 
             throw new RuntimeException("Login failed");
         }
@@ -60,9 +54,6 @@ public class AuthService {
         return jwtService.generateToken(user.getId());
     }
 
-    // =========================
-    // get current user
-    // =========================
     public User getMe(Long userId) {
         return userMapper.selectById(userId);
     }
