@@ -80,6 +80,6 @@ public class ItemService {
     // JWT userId
     // =========================
     private Long getCurrentUserId() {
-    return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-}
+        return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
 }
