@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 @Data
 public class AuctionResultResponse {
 
-    private Long itemId;
+    private Integer itemId;
 
     private Long winnerUserId;
 

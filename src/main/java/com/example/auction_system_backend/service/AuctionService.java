@@ -33,7 +33,7 @@ public class AuctionService {
      * 🛑 結標（手動 / scheduler 共用）
      */
     @Transactional
-    public AuctionResultResponse closeAuction(Long itemId) {
+    public AuctionResultResponse closeAuction(Integer itemId) {
 
         // 1. 查 item
         Item item = itemMapper.selectById(itemId);

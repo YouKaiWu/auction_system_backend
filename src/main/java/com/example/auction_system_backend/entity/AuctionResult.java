@@ -13,7 +13,7 @@ public class AuctionResult {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long itemId;
+    private Integer itemId;
 
     private Long winnerId;
 

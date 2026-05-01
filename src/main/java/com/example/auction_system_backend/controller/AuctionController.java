@@ -20,7 +20,7 @@ public class AuctionController {
      */
     @PostMapping("/{itemId}/close")
     public ResponseEntity<AuctionResultResponse> closeAuction(
-            @PathVariable Long itemId
+            @PathVariable Integer itemId
     ) {
         return ResponseEntity.ok(
                 auctionService.closeAuction(itemId)
