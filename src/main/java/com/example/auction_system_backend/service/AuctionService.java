@@ -8,6 +8,10 @@ import com.example.auction_system_backend.entity.Item;
 import com.example.auction_system_backend.mapper.AuctionResultMapper;
 import com.example.auction_system_backend.mapper.BidMapper;
 import com.example.auction_system_backend.mapper.ItemMapper;
+import com.example.auction_system_backend.mapper.UserMapper;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,19 +19,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class AuctionService {
 
     private final ItemMapper itemMapper;
     private final BidMapper bidMapper;
     private final AuctionResultMapper auctionResultMapper;
 
-    public AuctionService(ItemMapper itemMapper,
-                          BidMapper bidMapper,
-                          AuctionResultMapper auctionResultMapper) {
-        this.itemMapper = itemMapper;
-        this.bidMapper = bidMapper;
-        this.auctionResultMapper = auctionResultMapper;
-    }
+    private final MailService mailService;
+private final UserMapper userMapper;
 
     /**
      * 🛑 結標（手動 / scheduler 共用）
@@ -81,7 +81,7 @@ public class AuctionService {
         auctionResultMapper.insert(result);
 
         // 6. 通知（先 stub，之後接 Notification / Mail / WS）
-        notifyWinner(winnerId, item);
+        notifyWinner(winnerId, item, finalPrice);
 
         return toResponse(result);
     }
@@ -106,17 +106,27 @@ public class AuctionService {
     /**
      * 📩 通知 winner（先 stub）
      */
-    private void notifyWinner(Long winnerId, Item item) {
+    private void notifyWinner(Long winnerId, Item item, BigDecimal finalPrice) {
 
-        if (winnerId == null) {
-            return; // 沒人出價
-        }
-
-        // TODO: NotificationService / MailService / WebSocket
-        System.out.println("🏆 User " + winnerId +
-                " won item: " + item.getName());
+    if (winnerId == null) {
+        return;
     }
 
+    // 找 email
+    String email = userMapper.selectById(winnerId).getEmail();
+
+
+    // TODO: 寄信可用 mailtrap
+    // 寄信
+    // mailService.sendWinAuctionMail(
+    //         email,
+    //         item.getName(),
+    //         finalPrice.toString()
+    // );
+
+    // optional：log / notification table
+    System.out.println("notify sent to " + email);
+}
     /**
      * 🔁 DTO mapping
      */
