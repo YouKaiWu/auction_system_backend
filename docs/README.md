@@ -115,3 +115,262 @@ CREATE INDEX idx_bid_price ON bid(bid_price);
 -- 進階（建議）
 CREATE INDEX idx_item_status_time ON item(status, start_time);
 CREATE INDEX idx_bid_item_price ON bid(item_id, bid_price);
+
+---
+# Auction System Backend Architecture
+
+
+## 0. 系統流程定義（API 流程設計依據）
+
+### 使用者流程
+
+```
+Register → Login
+        ↓
+Browse Category → View Item → Bid
+        ↓
+Auction End → System Close → Send Mail
+```
+
+---
+
+## 1. Backend 分層架構
+
+系統採用標準分層設計：
+
+* controller → HTTP 請求入口
+* service → 業務邏輯處理層
+* mapper → 資料庫存取層（MyBatis）
+* entity → 資料庫對應模型
+
+此結構符合一般後端系統設計原則。
+
+---
+
+## 2. Controller 設計（依 Domain 劃分）
+
+Controller 不依據資料表拆分，而依功能領域（Domain）設計。
+
+---
+
+### AuthController
+
+* POST `/api/auth/register`
+* POST `/api/auth/login`
+* GET `/api/auth/me`
+
+---
+
+### CategoryController
+
+* GET `/api/categories`
+
+（分類功能為查詢導向）
+
+---
+
+### ItemController
+
+#### 建立拍賣
+
+* POST `/api/items`
+
+```json
+{
+  "name": "",
+  "categoryId": 1,
+  "startingPrice": 100,
+  "startTime": "",
+  "endTime": "",
+  "image": ""
+}
+```
+
+#### 查詢商品列表
+
+* GET `/api/items?categoryId=1`
+
+條件：僅回傳 ACTIVE 狀態商品
+
+#### 商品詳細
+
+* GET `/api/items/{id}`
+
+包含：
+
+* 商品資訊
+* 目前最高出價
+* 賣家資訊
+
+#### 使用者商品
+
+* GET `/api/items/my`
+
+---
+
+### BidController
+
+#### 出價
+
+* POST `/api/bids`
+
+```json
+{
+  "itemId": 1,
+  "bidPrice": 200
+}
+```
+
+#### 查詢商品出價紀錄
+
+* GET `/api/items/{id}/bids`
+
+#### 查詢最高出價
+
+* GET `/api/items/{id}/highest-bid`
+
+---
+
+### UserMessageController
+
+#### 新增留言
+
+* POST `/api/users/{id}/messages`
+
+#### 查詢留言
+
+* GET `/api/users/{id}/messages`
+
+---
+
+### NotificationController
+
+* GET `/api/notifications`
+
+---
+
+### AuctionController
+
+此 Controller 處理系統層級行為，而非一般 CRUD。
+
+#### 手動結標（管理或測試用途）
+
+* POST `/api/auctions/{itemId}/close`
+
+#### 查詢結標結果
+
+* GET `/api/auctions/{itemId}/result`
+
+---
+
+## 3. Service 層設計
+
+Service 負責主要業務邏輯。
+
+---
+
+### AuctionService
+
+負責拍賣結標相關流程：
+
+* closeAuction()
+* findWinner()
+* createAuctionResult()
+* sendNotification()
+* sendEmail()
+* updateItemStatus()
+
+---
+
+### BidService
+
+* placeBid()
+* validateBid()
+* updateCurrentPrice()
+
+必要驗證條件：
+
+* auction 是否 ACTIVE
+* 時間是否有效
+* 出價是否高於目前最高價
+
+---
+
+### ItemService
+
+* createItem()
+* getActiveItems()
+* getItemDetail()
+
+---
+
+### AuthService
+
+* register()
+* login()
+
+---
+
+## 4. Mapper（MyBatis）
+
+Mapper 僅負責資料存取，不包含業務邏輯。
+
+功能範圍：
+
+* insert
+* update
+* select
+* delete
+
+---
+
+常用 Mapper：
+
+* BidMapper
+* ItemMapper
+* UserMapper
+* AuctionResultMapper
+
+---
+
+## 5. 自動結標機制
+
+透過排程任務定期檢查拍賣狀態：
+
+```java
+@Scheduled(fixedRate = 60000)
+```
+
+---
+
+### AuctionScheduler
+
+每分鐘執行一次：
+
+```sql
+SELECT item
+WHERE end_time < now
+AND status = ACTIVE
+```
+
+並呼叫：
+
+```
+auctionService.closeAuction(item)
+```
+
+---
+
+## 6. 自動寄信流程
+
+系統完成結標後執行通知流程：
+
+```
+Scheduler
+   ↓
+AuctionService.closeAuction()
+   ↓
+查詢最高出價
+   ↓
+寫入 auc
+```
