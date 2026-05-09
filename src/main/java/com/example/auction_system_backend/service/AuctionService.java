@@ -63,7 +63,7 @@ public class AuctionService {
         }
 
         // 4. 更新 item 狀態
-        item.setStatus("CLOSED");
+        item.setStatus("ENDED");
         itemMapper.updateById(item);
 
         // 5. 寫入 auction_result
@@ -122,7 +122,7 @@ public class AuctionService {
         res.setItemId(r.getItemId());
         res.setWinnerUserId(r.getWinnerId());
         res.setFinalPrice(r.getFinalPrice());
-        res.setStatus("CLOSED");
+        res.setStatus("ENDED");
         return res;
     }
 }
