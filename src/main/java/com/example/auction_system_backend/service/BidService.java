@@ -9,6 +9,8 @@ import com.example.auction_system_backend.mapper.BidMapper;
 import com.example.auction_system_backend.mapper.ItemMapper;
 import com.example.auction_system_backend.mapper.UserMapper;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,19 +21,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class BidService {
 
     private final BidMapper bidMapper;
     private final ItemMapper itemMapper;
     private final UserMapper userMapper;
+    
+    private final ItemService itemService;
 
-    public BidService(BidMapper bidMapper,
-            ItemMapper itemMapper,
-            UserMapper userMapper) {
-        this.bidMapper = bidMapper;
-        this.itemMapper = itemMapper;
-        this.userMapper = userMapper;
-    }
 
     @Transactional
     public BidResponse placeBid(BidRequest request) {
@@ -72,11 +70,12 @@ public class BidService {
         // 6. insert bid
         Bid bid = new Bid();
         bid.setItemId(request.getItemId());
-        bid.setBidderId(userId); // 🔥 改這裡
+        bid.setBidderId(userId);
         bid.setBidPrice(request.getBidPrice());
         bid.setBidTime(LocalDateTime.now());
 
         bidMapper.insert(bid);
+        itemService.updateCurrentPrice(request.getItemId(), request.getBidPrice());
 
         return toResponse(bid);
     }

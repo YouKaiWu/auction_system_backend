@@ -1,11 +1,13 @@
 package com.example.auction_system_backend.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.auction_system_backend.DTO.item.CreateItemRequest;
 import com.example.auction_system_backend.entity.Item;
 import com.example.auction_system_backend.mapper.ItemMapper;
@@ -69,5 +71,13 @@ public class ItemService {
     // =========================
     private Long getCurrentUserId() {
         return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public void updateCurrentPrice(Long itemId, BigDecimal price) {
+        itemMapper.update(
+                null,
+                new LambdaUpdateWrapper<Item>()
+                        .eq(Item::getId, itemId)
+                        .set(Item::getCurrentPrice, price));
     }
 }
