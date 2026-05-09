@@ -107,7 +107,8 @@ public class SecurityConfig {
                         // swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/images/**"
                         ).permitAll()
 
                         // 其他全部要登入
