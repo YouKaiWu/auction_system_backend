@@ -29,6 +29,7 @@ public class AuctionService {
 
     private final MailService mailService;
     private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public AuctionResultResponse closeAuction(Integer itemId) {
@@ -55,10 +56,10 @@ public class AuctionService {
             return toResponse(existing);
         }
 
-        //  查 item
+        // 查 item
         Item item = itemMapper.selectById(itemId);
 
-        //  找最高 bid
+        // 找最高 bid
         Bid highestBid = bidMapper.selectOne(
                 new LambdaQueryWrapper<Bid>()
                         .eq(Bid::getItemId, itemId)
@@ -70,7 +71,7 @@ public class AuctionService {
                 ? highestBid.getBidPrice()
                 : BigDecimal.ZERO;
 
-        //  寫 auction result
+        // 寫 auction result
         AuctionResult result = new AuctionResult();
         result.setItemId(itemId);
         result.setWinnerId(winnerId);
@@ -90,7 +91,7 @@ public class AuctionService {
             return toResponse(existing);
         }
 
-        //  通知（建議 async）
+        // 通知（建議 async）
         notifyWinner(winnerId, item, finalPrice);
 
         return toResponse(result);
@@ -111,23 +112,39 @@ public class AuctionService {
 
     private void notifyWinner(Long winnerId, Item item, BigDecimal finalPrice) {
 
+        // 沒得標直接跳過
         if (winnerId == null) {
             return;
         }
 
-        // 找 email
+        // 取得使用者 email
         String email = userMapper.selectById(winnerId).getEmail();
 
-        // TODO: 寄信可用 mailtrap
-        // 寄信
-        // mailService.sendWinAuctionMail(
-        // email,
-        // item.getName(),
-        // finalPrice.toString()
-        // );
+        // 通知標題與內容
+        String title = "Auction Result";
+        String content = "You won the auction for item: "
+                + item.getName()
+                + ", final price: "
+                + finalPrice;
 
-        // optional：log / notification table
-        System.out.println("notify sent to " + email);
+        // 寫入 notification table
+        notificationService.createNotification(
+                winnerId,
+                "AUCTION_WIN",
+                title,
+                content);
+
+        // 寄 email（新增）
+        try {
+            mailService.sendWinAuctionMail(
+                    email,
+                    item.getName(),
+                    finalPrice.toString());
+        } catch (Exception e) {
+            // email 失敗不影響主流程
+            System.out.println("Email send failed: " + email);
+            e.printStackTrace();
+        }
     }
 
     // DTO mapping
