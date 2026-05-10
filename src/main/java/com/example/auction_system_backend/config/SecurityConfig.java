@@ -100,12 +100,10 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // auth 放行
-                        .requestMatchers(
-                                "/api/auth/**"
-                        ).permitAll()
-
                         // swagger
+                        // images
                         .requestMatchers(
+                                "/api/auth/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/images/**"
