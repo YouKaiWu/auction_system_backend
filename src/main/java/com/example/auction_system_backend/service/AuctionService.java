@@ -1,6 +1,7 @@
 package com.example.auction_system_backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.auction_system_backend.DTO.auction.AuctionResultResponse;
 import com.example.auction_system_backend.entity.AuctionResult;
 import com.example.auction_system_backend.entity.Bid;
@@ -32,50 +33,64 @@ public class AuctionService {
     @Transactional
     public AuctionResultResponse closeAuction(Integer itemId) {
 
-        // 1. 查 item
+        // CAS 結標
+        int updated = itemMapper.update(
+                null,
+                new LambdaUpdateWrapper<Item>()
+                        .eq(Item::getId, itemId)
+                        .eq(Item::getStatus, "ACTIVE")
+                        .set(Item::getStatus, "ENDED"));
+
+        // 已結標 or 不存在
+        if (updated == 0) {
+
+            AuctionResult existing = auctionResultMapper.selectOne(
+                    new LambdaQueryWrapper<AuctionResult>()
+                            .eq(AuctionResult::getItemId, itemId));
+
+            if (existing == null) {
+                throw new RuntimeException("Item not found or already closed");
+            }
+
+            return toResponse(existing);
+        }
+
+        //  查 item
         Item item = itemMapper.selectById(itemId);
-        if (item == null) {
-            throw new RuntimeException("Item not found");
-        }
 
-        // 2. 如果已經結標（防重複執行）
-        AuctionResult existingResult = auctionResultMapper.selectOne(
-                new LambdaQueryWrapper<AuctionResult>()
-                        .eq(AuctionResult::getItemId, itemId));
-
-        if (existingResult != null) {
-            return toResponse(existingResult);
-        }
-
-        // 3. 找最高 bid
+        //  找最高 bid
         Bid highestBid = bidMapper.selectOne(
                 new LambdaQueryWrapper<Bid>()
                         .eq(Bid::getItemId, itemId)
                         .orderByDesc(Bid::getBidPrice)
                         .last("LIMIT 1"));
 
-        Long winnerId = null;
-        BigDecimal finalPrice = BigDecimal.ZERO;
+        Long winnerId = (highestBid != null) ? highestBid.getBidderId() : null;
+        BigDecimal finalPrice = (highestBid != null)
+                ? highestBid.getBidPrice()
+                : BigDecimal.ZERO;
 
-        if (highestBid != null) {
-            winnerId = highestBid.getBidderId();
-            finalPrice = highestBid.getBidPrice();
-        }
-
-        // 4. 更新 item 狀態
-        item.setStatus("ENDED");
-        itemMapper.updateById(item);
-
-        // 5. 寫入 auction_result
+        //  寫 auction result
         AuctionResult result = new AuctionResult();
         result.setItemId(itemId);
         result.setWinnerId(winnerId);
         result.setFinalPrice(finalPrice);
         result.setClosedAt(LocalDateTime.now());
 
-        auctionResultMapper.insert(result);
+        try {
+            auctionResultMapper.insert(result);
 
-        // 6. 通知（先 stub，之後接 Notification / Mail / WS）
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+
+            // 已經被別人 insert，直接回 existing
+            AuctionResult existing = auctionResultMapper.selectOne(
+                    new LambdaQueryWrapper<AuctionResult>()
+                            .eq(AuctionResult::getItemId, itemId));
+
+            return toResponse(existing);
+        }
+
+        //  通知（建議 async）
         notifyWinner(winnerId, item, finalPrice);
 
         return toResponse(result);
