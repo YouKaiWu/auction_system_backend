@@ -34,7 +34,6 @@ public class AuctionService {
     @Transactional
     public AuctionResultResponse closeAuction(Integer itemId) {
 
-        // CAS 結標
         int updated = itemMapper.update(
                 null,
                 new LambdaUpdateWrapper<Item>()
@@ -42,7 +41,6 @@ public class AuctionService {
                         .eq(Item::getStatus, "ACTIVE")
                         .set(Item::getStatus, "ENDED"));
 
-        // 已結標 or 不存在
         if (updated == 0) {
 
             AuctionResult existing = auctionResultMapper.selectOne(
@@ -56,22 +54,37 @@ public class AuctionService {
             return toResponse(existing);
         }
 
-        // 查 item
         Item item = itemMapper.selectById(itemId);
 
-        // 找最高 bid
         Bid highestBid = bidMapper.selectOne(
                 new LambdaQueryWrapper<Bid>()
                         .eq(Bid::getItemId, itemId)
                         .orderByDesc(Bid::getBidPrice)
                         .last("LIMIT 1"));
 
-        Long winnerId = (highestBid != null) ? highestBid.getBidderId() : null;
-        BigDecimal finalPrice = (highestBid != null)
-                ? highestBid.getBidPrice()
-                : BigDecimal.ZERO;
+        // 沒人出價 → 流標處理
+        if (highestBid == null) {
 
-        // 寫 auction result
+            AuctionResult result = new AuctionResult();
+            result.setItemId(itemId);
+            result.setWinnerId(null);
+            result.setFinalPrice(BigDecimal.ZERO);
+            result.setClosedAt(LocalDateTime.now());
+
+            auctionResultMapper.insert(result);
+
+            notificationService.createNotification(
+                    null,
+                    "SYSTEM",
+                    "Auction Ended",
+                    "Item " + item.getName() + " ended with no bids");
+
+            return toResponse(result);
+        }
+
+        Long winnerId = highestBid.getBidderId();
+        BigDecimal finalPrice = highestBid.getBidPrice();
+
         AuctionResult result = new AuctionResult();
         result.setItemId(itemId);
         result.setWinnerId(winnerId);
@@ -80,10 +93,8 @@ public class AuctionService {
 
         try {
             auctionResultMapper.insert(result);
-
         } catch (org.springframework.dao.DuplicateKeyException e) {
 
-            // 已經被別人 insert，直接回 existing
             AuctionResult existing = auctionResultMapper.selectOne(
                     new LambdaQueryWrapper<AuctionResult>()
                             .eq(AuctionResult::getItemId, itemId));
@@ -91,7 +102,6 @@ public class AuctionService {
             return toResponse(existing);
         }
 
-        // 通知（建議 async）
         notifyWinner(winnerId, item, finalPrice);
 
         return toResponse(result);
@@ -130,7 +140,7 @@ public class AuctionService {
         // 寫入 notification table
         notificationService.createNotification(
                 winnerId,
-                "AUCTION_WIN",
+                "WIN_AUCTION",
                 title,
                 content);
 
